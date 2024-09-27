@@ -11,7 +11,7 @@ func SetupRoutes() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/songs", handlers.SongsHandler).Methods("GET")
-	router.HandleFunc("/api/songs/{id}", handlers.GetSongHandler).Methods("GET")
+	router.HandleFunc("/api/songs/{id}/lyrics", handlers.GetSongHandler).Methods("GET")
 	router.HandleFunc("/api/songs/{id}", handlers.DeleteSongHandler).Methods("DELETE")
 	router.HandleFunc("/api/songs/{id}", handlers.UpdateSongHandler).Methods("PUT")
 	router.HandleFunc("/api/songs", handlers.AddSongHandler).Methods("POST")
