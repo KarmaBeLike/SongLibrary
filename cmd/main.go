@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -13,23 +14,29 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("config loh", slog.Any("error", err))
+		slog.Error("failed load config", slog.Any("error", err))
 		return
 	}
 
 	db, err := database.OpenDB(cfg)
 	if err != nil {
-		slog.Error("bd loh", slog.Any("error", err))
+		slog.Error("failed to connect to db", slog.Any("error", err))
 		return
 	}
 	defer db.Close()
-	slog.Info("health check", slog.Any("db ping", db.Ping()))
+
+	if err := database.RunMigrations(db); err != nil {
+		slog.Error("Error running migrations", slog.Any("error", err))
+		return
+	}
 
 	router := routers.SetupRoutes()
 
-	log.Println("Server is runnig on port 8080...")
-	err = http.ListenAndServe(":8080", router)
+	port := cfg.Port
+	log.Printf("Server is running on port %d...", port)
+
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
-		log.Fatal("Error starting server", err)
+		log.Fatal("Error starting server: ", err)
 	}
 }

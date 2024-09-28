@@ -19,14 +19,18 @@ type Config struct {
 func Load() (*Config, error) {
 	config := &Config{}
 
-	viper.SetConfigFile(".env")
+	viper.SetConfigName(".env")
+	viper.SetConfigType("env")
+	viper.AddConfigPath(".")
+
+	viper.AutomaticEnv() // Загружать переменные окружения
 
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("Can't find the file .env : ", err)
 	}
 
-	err = viper.Unmarshal(&config)
+	err = viper.Unmarshal(config)
 	if err != nil {
 		log.Fatal("Environment can't be loaded: ", err)
 	}
