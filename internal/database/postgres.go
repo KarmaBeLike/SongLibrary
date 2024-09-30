@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// OpenDB открывает соединение с базой данных и выполняет ping
 func OpenDB(cfg *config.Config) (*sql.DB, error) {
 	dbURL := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
@@ -22,21 +21,17 @@ func OpenDB(cfg *config.Config) (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Println("Failed to connect to the database:", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to connect to the database:")
 	}
 
-	// Пинг для проверки соединения
 	if err := db.Ping(); err != nil {
-		log.Println("Database ping failed:", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Database ping failed")
 	}
 
 	log.Println("Database connection established.")
 	return db, nil
 }
 
-// RunMigrations запускает миграции
 func RunMigrations(db *sql.DB) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -49,8 +44,39 @@ func RunMigrations(db *sql.DB) error {
 	if err != nil {
 		return errors.Wrap(err, "migrate")
 	}
-	m.Up()
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return errors.Wrap(err, "failed to apply migrations")
+	}
 
 	log.Println("Migrations applied successfully!")
+
+	if err := printExistingTables(db); err != nil {
+		return errors.Wrap(err, "failed to print existing tables")
+	}
+
+	return nil
+}
+
+func printExistingTables(db *sql.DB) error {
+	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+	if err != nil {
+		return errors.Wrap(err, "querying existing tables")
+	}
+	defer rows.Close()
+
+	log.Println("Existing tables:")
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
+			return errors.Wrap(err, "scanning table name")
+		}
+		log.Println("-", tableName)
+	}
+
+	if err := rows.Err(); err != nil {
+		return errors.Wrap(err, "error during rows iteration")
+	}
+
 	return nil
 }

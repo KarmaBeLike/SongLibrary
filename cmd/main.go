@@ -8,13 +8,15 @@ import (
 
 	"github.com/KarmaBeLike/SongLibrary/config"
 	"github.com/KarmaBeLike/SongLibrary/internal/database"
+	"github.com/KarmaBeLike/SongLibrary/internal/repository"
 	"github.com/KarmaBeLike/SongLibrary/internal/routers"
+	"github.com/KarmaBeLike/SongLibrary/internal/service"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("failed load config", slog.Any("error", err))
+		slog.Error("failed to load config", slog.Any("error", err))
 		return
 	}
 
@@ -26,11 +28,13 @@ func main() {
 	defer db.Close()
 
 	if err := database.RunMigrations(db); err != nil {
-		slog.Error("Error running migrations", slog.Any("error", err))
+		slog.Error("error running migrations", slog.Any("error", err))
 		return
 	}
 
-	router := routers.SetupRoutes()
+	songRepo := repository.NewSongRepository(db)
+	songService := service.NewSongService(songRepo, cfg.ExternalAPIURL)
+	router := routers.SetupRoutes(songService)
 
 	port := cfg.Port
 	log.Printf("Server is running on port %d...", port)

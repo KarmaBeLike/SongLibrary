@@ -23,7 +23,7 @@ func Load() (*Config, error) {
 	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
 
-	viper.AutomaticEnv() // Загружать переменные окружения
+	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()
 	if err != nil {

@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"github.com/KarmaBeLike/SongLibrary/internal/models"
 )
 
-func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
+func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
@@ -14,14 +16,19 @@ func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.songService.DeleteSongByID(id)
-	if err != nil {
+	var updateRequest models.UpdateSongRequest
+	if err := json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+		http.Error(w, "Invalid request body.", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.songService.UpdateSongByID(id, &updateRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message": "Song deleted successfully.",
+		"message": "Song updated successfully.",
 		"id":      id,
 	}
 	w.Header().Set("Content-Type", "application/json")
