@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/KarmaBeLike/SongLibrary/config"
 	"github.com/KarmaBeLike/SongLibrary/internal/database"
@@ -14,6 +15,14 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	slog.SetDefault(logger)
+
+	slog.Info("Logger initialized", slog.String("output", "JSON"))
+
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("failed to load config", slog.Any("error", err))

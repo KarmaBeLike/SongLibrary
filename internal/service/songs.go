@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -105,27 +106,40 @@ func (s *SongService) UpdateSongByID(id int, updateRequest *models.UpdateSongReq
 }
 
 func (s *SongService) AddSong(newSong models.NewSongRequest) (int, error) {
+	slog.Info("Adding new song", slog.String("group", newSong.Group), slog.String("song", newSong.Song))
+
 	requestURL := fmt.Sprintf("%s?group=%s&song=%s", s.externalAPIURL, url.QueryEscape(newSong.Group), url.QueryEscape(newSong.Song))
+
+	slog.Debug("Calling external API", slog.String("url", requestURL))
 
 	resp, err := http.Get(requestURL)
 	if err != nil {
+		slog.Error("Failed to call external API", slog.Any("error", err))
 		return 0, fmt.Errorf("failed to call external API: %w", err)
 	}
 	defer resp.Body.Close()
 
+	slog.Debug("External API response", slog.String("status", resp.Status))
+
 	if resp.StatusCode != http.StatusOK {
+		slog.Warn("External API returned non-OK status", slog.String("status", resp.Status))
 		return 0, fmt.Errorf("external API returned status: %s", resp.Status)
 	}
 
 	var songDetail models.SongDetail
 	if err := json.NewDecoder(resp.Body).Decode(&songDetail); err != nil {
+		slog.Error("Failed to decode external API response", slog.Any("error", err))
 		return 0, fmt.Errorf("failed to decode external API response: %w", err)
 	}
 
+	slog.Info("Successfully retrieved song details from external API", slog.Any("songDetail", songDetail))
+
 	id, err := s.songRepo.AddSong(newSong.Group, newSong.Song, &songDetail)
 	if err != nil {
+		slog.Error("Failed to add song to the database", slog.Any("error", err))
 		return 0, err
 	}
+	slog.Info("Successfully added song to the database", slog.Int("song_id", id))
 
 	return id, nil
 }
