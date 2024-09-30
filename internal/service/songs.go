@@ -25,8 +25,11 @@ func NewSongService(songRepo *repository.SongRepository, externalAPIURL string) 
 }
 
 func (s *SongService) GetSongs(group, song string, page, limit int) ([]models.Song, models.Pagination, error) {
+	slog.Debug("Fetching songs", slog.String("group", group), slog.String("song", song), slog.Int("page", page), slog.Int("limit", limit))
+
 	songs, err := s.songRepo.GetSongsByAnyField(group, song)
 	if err != nil {
+		slog.Error("Error fetching songs", slog.Any("error", err))
 		return nil, models.Pagination{}, err
 	}
 
@@ -48,17 +51,22 @@ func (s *SongService) GetSongs(group, song string, page, limit int) ([]models.So
 		Page:  page,
 		Total: total,
 	}
+	slog.Info("Songs fetched successfully", slog.Int("total", total), slog.Int("returned_count", len(paginatedSongs)))
 
 	return paginatedSongs, pagination, nil
 }
 
 func (s *SongService) GetPaginatedSongLyrics(id int, page, limit int) (*models.SongVerses, error) {
+	slog.Debug("Fetching song lyrics", slog.Int("song_id", id), slog.Int("page", page), slog.Int("limit", limit))
+
 	song, err := s.songRepo.GetSongByID(id)
 	if err != nil {
+		slog.Error("Error fetching song by ID", slog.Int("song_id", id), slog.Any("error", err))
 		return nil, err
 	}
 
 	if song.Lyrics == nil {
+		slog.Warn("Lyrics not found for song", slog.Int("song_id", id))
 		return nil, fmt.Errorf("lyrics not found for song ID %d", id)
 	}
 
@@ -74,6 +82,7 @@ func (s *SongService) GetPaginatedSongLyrics(id int, page, limit int) (*models.S
 	end := start + limit
 
 	if start >= totalVerses || start < 0 {
+		slog.Warn("Page out of range", slog.Int("page", page), slog.Int("total_verses", totalVerses))
 		return nil, fmt.Errorf("page out of range")
 	}
 
@@ -90,19 +99,33 @@ func (s *SongService) GetPaginatedSongLyrics(id int, page, limit int) (*models.S
 		Verses: paginatedVerses,
 	}
 
+	slog.Info("Lyrics fetched successfully", slog.Int("song_id", id), slog.Int("returned_verses", len(paginatedVerses)))
+
 	return response, nil
 }
 
 func (s *SongService) DeleteSongByID(id int) error {
+	slog.Debug("Deleting song by ID", slog.Int("song_id", id))
+
 	err := s.songRepo.DeleteSongByID(id)
 	if err != nil {
+		slog.Error("Error deleting song", slog.Int("song_id", id), slog.Any("error", err))
 		return fmt.Errorf("failed to delete song: %w", err)
 	}
+	slog.Info("Song deleted successfully", slog.Int("song_id", id))
 	return nil
 }
 
 func (s *SongService) UpdateSongByID(id int, updateRequest *models.UpdateSongRequest) error {
-	return s.songRepo.UpdateSongByID(id, updateRequest)
+	slog.Debug("Updating song by ID", slog.Int("song_id", id), slog.Any("updateRequest", updateRequest))
+	err := s.songRepo.UpdateSongByID(id, updateRequest)
+	if err != nil {
+		slog.Error("Error updating song", slog.Int("song_id", id), slog.Any("error", err))
+		return err
+	}
+
+	slog.Info("Song updated successfully", slog.Int("song_id", id))
+	return nil
 }
 
 func (s *SongService) AddSong(newSong models.NewSongRequest) (int, error) {
