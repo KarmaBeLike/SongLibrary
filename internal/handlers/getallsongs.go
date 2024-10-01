@@ -17,6 +17,19 @@ func NewSongHandler(songService *service.SongService) *SongHandler {
 	return &SongHandler{songService: songService}
 }
 
+// GetSongs fetches songs with optional filters (group and song title) and supports pagination.
+// @Summary Get songs with optional filtering and pagination
+// @Description Retrieve a list of songs filtered by group or title, with pagination support.
+// @Tags songs
+// @Accept  json
+// @Produce  json
+// @Param group query string false "Group name" example("The Beatles")
+// @Param song query string false "Song title" example("Hey Jude")
+// @Param page query int false "Page number" example(1)
+// @Param limit query int false "Limit of songs per page" example(10)
+// @Success 200 {object} map[string]interface{} "Successful operation"
+// @Failure 500 {string} string "Internal server error"
+// @Router /api/songs [get]
 func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	group := r.URL.Query().Get("group")
 	song := r.URL.Query().Get("song")

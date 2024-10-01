@@ -7,6 +7,17 @@ import (
 	"strconv"
 )
 
+// DeleteSong deletes a song by its ID
+// @Summary Delete a song by ID
+// @Description Delete a song from the library by providing the song ID as a query parameter.
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param id query int true "Song ID"
+// @Success 200 {object} map[string]interface{} "Song deleted successfully"
+// @Failure 400 {string} string "Invalid song ID. It must be a positive integer."
+// @Failure 404 {string} string "Song not found"
+// @Router /api/songs [delete]
 func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)

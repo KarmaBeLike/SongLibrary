@@ -8,12 +8,18 @@ import (
 	"os"
 
 	"github.com/KarmaBeLike/SongLibrary/config"
+	_ "github.com/KarmaBeLike/SongLibrary/docs"
 	"github.com/KarmaBeLike/SongLibrary/internal/database"
 	"github.com/KarmaBeLike/SongLibrary/internal/repository"
 	"github.com/KarmaBeLike/SongLibrary/internal/routers"
 	"github.com/KarmaBeLike/SongLibrary/internal/service"
 )
 
+// @title SongLibrary
+// @version 1.0
+
+// @host localhost:8080
+// @BasePath /
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,

@@ -7,6 +7,20 @@ import (
 	"strconv"
 )
 
+// GetSongByID retrieves the lyrics of a song by its ID with optional pagination.
+// @Summary Get song lyrics by ID with optional pagination
+// @Description Retrieve lyrics of a song by its ID, with options to paginate the lyrics.
+// @Tags songs
+// @Accept  json
+// @Produce  json
+// @Param id query int true "Song ID" example(1)
+// @Param page query int false "Page number" example(1)
+// @Param limit query int false "Limit of verses per page" example(1)
+// @Success 200 {object} models.SongVerses "Successful operation"
+// @Failure 400 {string} string "Invalid song ID or pagination parameters"
+// @Failure 404 {string} string "Song not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /api/songs/lyrics [get]
 func (h *SongHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Received request to get song by ID", slog.String("method", r.Method), slog.String("url", r.URL.String()))
 

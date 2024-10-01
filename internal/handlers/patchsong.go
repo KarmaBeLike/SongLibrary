@@ -9,6 +9,19 @@ import (
 	"github.com/KarmaBeLike/SongLibrary/internal/models"
 )
 
+// UpdateSong updates the details of a song by its ID.
+// @Summary Update song by ID
+// @Description Update the details of a song using its ID.
+// @Tags songs
+// @Accept  json
+// @Produce  json
+// @Param id query int true "Song ID" example(1)
+// @Param updateRequest body models.UpdateSongRequest true "Update song details"
+// @Success 200 {object} map[string]interface{} "Successful operation"
+// @Failure 400 {string} string "Invalid song ID or request body"
+// @Failure 404 {string} string "Song not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /api/songs [patch]
 func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Received request to update song", slog.String("method", r.Method), slog.String("url", r.URL.String()))
 

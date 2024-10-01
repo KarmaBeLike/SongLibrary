@@ -8,6 +8,17 @@ import (
 	"github.com/KarmaBeLike/SongLibrary/internal/models"
 )
 
+// AddSong adds a new song to the library.
+// @Summary Add a new song
+// @Description Adds a new song with the given details to the library.
+// @Tags songs
+// @Accept json
+// @Produce json
+// @Param newSong body models.NewSongRequest true "New song details"
+// @Success 201 {object} map[string]interface{} "Successful operation"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Internal server error"
+// @Router /api/songs [post]
 func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Received request to add a new song", slog.String("method", r.Method), slog.String("url", r.URL.String()))
 

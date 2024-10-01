@@ -1,0 +1,229 @@
+basePath: /
+definitions:
+  models.NewSongRequest:
+    properties:
+      group:
+        type: string
+      song:
+        type: string
+    type: object
+  models.SongVerses:
+    properties:
+      group:
+        type: string
+      id:
+        type: integer
+      song:
+        type: string
+      verses:
+        items:
+          type: string
+        type: array
+    type: object
+  models.UpdateSongRequest:
+    properties:
+      group:
+        type: string
+      link:
+        type: string
+      lyrics:
+        type: string
+      releaseDate:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: SongLibrary
+  version: "1.0"
+paths:
+  /api/songs:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a song from the library by providing the song ID as a query
+        parameter.
+      parameters:
+      - description: Song ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Song deleted successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid song ID. It must be a positive integer.
+          schema:
+            type: string
+        "404":
+          description: Song not found
+          schema:
+            type: string
+      summary: Delete a song by ID
+      tags:
+      - songs
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of songs filtered by group or title, with pagination
+        support.
+      parameters:
+      - description: Group name
+        example: '"The Beatles"'
+        in: query
+        name: group
+        type: string
+      - description: Song title
+        example: '"Hey Jude"'
+        in: query
+        name: song
+        type: string
+      - description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - description: Limit of songs per page
+        example: 10
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get songs with optional filtering and pagination
+      tags:
+      - songs
+    patch:
+      consumes:
+      - application/json
+      description: Update the details of a song using its ID.
+      parameters:
+      - description: Song ID
+        example: 1
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Update song details
+        in: body
+        name: updateRequest
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateSongRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid song ID or request body
+          schema:
+            type: string
+        "404":
+          description: Song not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update song by ID
+      tags:
+      - songs
+    post:
+      consumes:
+      - application/json
+      description: Adds a new song with the given details to the library.
+      parameters:
+      - description: New song details
+        in: body
+        name: newSong
+        required: true
+        schema:
+          $ref: '#/definitions/models.NewSongRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successful operation
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Add a new song
+      tags:
+      - songs
+  /api/songs/lyrics:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve lyrics of a song by its ID, with options to paginate the
+        lyrics.
+      parameters:
+      - description: Song ID
+        example: 1
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - description: Limit of verses per page
+        example: 1
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/models.SongVerses'
+        "400":
+          description: Invalid song ID or pagination parameters
+          schema:
+            type: string
+        "404":
+          description: Song not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get song lyrics by ID with optional pagination
+      tags:
+      - songs
+swagger: "2.0"
