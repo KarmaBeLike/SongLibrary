@@ -217,7 +217,5 @@ func convertDate(dateStr string) (string, error) {
 		return "", fmt.Errorf("failed to parse date: %w", err)
 	}
 
-	formattedDate := parsedDate.Format("2006-01-02")
-	slog.Debug("Date converted", slog.String("formattedDate", formattedDate))
-	return formattedDate, nil
+	return parsedDate.Format("2006-01-02"), nil
 }
