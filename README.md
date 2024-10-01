@@ -31,7 +31,7 @@ go run ./cmd
     GET /api/songs
     ```
      ```http
-    GET /api/songs?group=Muse&page=1
+    GET /api/songs?group=Queen&page=1
     ```
     - queries for filtering:
         - group
@@ -41,7 +41,19 @@ go run ./cmd
         - limit
     - sample output:
     ```json
-
+    "songs": [
+        {
+            "id": 16,
+            "group": "Queen",
+            "song": "Bohemian Rhapsody",
+            "text": null,
+            "releaseDate": null,
+            "link": null,
+            "limit": 0,
+            "page": 0,
+            "total": 0,
+            "verses": null
+        }
     ```
 - **Listing verses with pagination:**
     ```http
@@ -63,22 +75,22 @@ go run ./cmd
 
     ```
     
-- **Adding new car data**
+- **Adding new song data**
     ```http
     POST /api/songs
     ```
-    - input body:
+    - output body:
     ```json
     {
     "id": "1,message":"Song added successfully" 
     }
     ```
-- **Update car info:**
+- **Update song info:**
     - required parameter: `id`
      ```http
     PATCH /api/songs?id=2
     ```
-    - input body:
+    - output body:
     ```json
     
      {
@@ -87,13 +99,17 @@ go run ./cmd
 
     }
     ```
-- **Delete car info:**
+- **Delete song info:**
     - required parameter: `id`
      ```http
     DELETE /api/songs?id=39
     ```
-    {
+     - output body:
+    ```json
+    
+     {
     "id": 39,
     "message": "Song deleted successfully."
-}
+
+    }
 ---
