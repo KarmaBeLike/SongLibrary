@@ -56,9 +56,9 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	filter.Limit = limit
 
 	slog.Debug("Received filter request", slog.Any("filter", filter))
-
 	// Вызов сервиса с фильтром
-	songs, pagination, err := h.songService.GetSongs(*filter)
+
+	songs, pagination, err := h.songService.GetSongs(r.Context(), *filter)
 	if err != nil {
 		slog.Error("Failed to fetch songs", slog.Any("filter", filter), slog.Any("error", err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

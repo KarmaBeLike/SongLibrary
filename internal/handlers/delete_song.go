@@ -29,7 +29,7 @@ func (h *SongHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Starting to delete song", slog.Int("song_id", id))
 
-	err = h.songService.DeleteSongByID(id)
+	err = h.songService.DeleteSongByID(r.Context(), id)
 	if err != nil {
 		slog.Error("Failed to delete song", slog.Int("song_id", id), slog.Any("error", err))
 		http.Error(w, err.Error(), http.StatusNotFound)

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -19,7 +20,7 @@ func NewSongRepository(db *sql.DB) *SongRepository {
 	return &SongRepository{db: db}
 }
 
-func (r *SongRepository) GetSongByID(id int) (models.Song, error) {
+func (r *SongRepository) GetSongByID(ctx context.Context, id int) (models.Song, error) {
 	slog.Debug("Fetching song by ID", slog.Int("id", id))
 
 	var song models.Song
@@ -34,7 +35,7 @@ func (r *SongRepository) GetSongByID(id int) (models.Song, error) {
 		FROM songs 
 		WHERE id = $1
 	`
-	err := r.db.QueryRow(query, id).Scan(&song.ID, &song.Group, &song.Title, &song.Lyrics, &song.ReleaseDate, &song.Link)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&song.ID, &song.Group, &song.Title, &song.Lyrics, &song.ReleaseDate, &song.Link)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Info("No song found with ID", slog.Int("id", id))
@@ -47,7 +48,7 @@ func (r *SongRepository) GetSongByID(id int) (models.Song, error) {
 	return song, nil
 }
 
-func (r *SongRepository) GetSongsByFilter(filter models.SongFilter) ([]models.Song, error) {
+func (r *SongRepository) GetSongsByFilter(ctx context.Context, filter models.SongFilter) ([]models.Song, error) {
 	query := `SELECT  song_id,group_name, title, lyrics, release_date, link FROM songs WHERE 1=1`
 	args := []interface{}{}
 	paramIndex := 1
@@ -57,6 +58,7 @@ func (r *SongRepository) GetSongsByFilter(filter models.SongFilter) ([]models.So
 		args = append(args, filter.Group)
 		paramIndex++
 	}
+
 	if filter.Title != "" {
 		query += fmt.Sprintf(" AND title ILIKE $%d", paramIndex)
 		args = append(args, "%"+filter.Title+"%")
@@ -75,7 +77,7 @@ func (r *SongRepository) GetSongsByFilter(filter models.SongFilter) ([]models.So
 
 	slog.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,11 +94,11 @@ func (r *SongRepository) GetSongsByFilter(filter models.SongFilter) ([]models.So
 	return songs, nil
 }
 
-func (r *SongRepository) DeleteSongByID(id int) error {
+func (r *SongRepository) DeleteSongByID(ctx context.Context, id int) error {
 	slog.Debug("Deleting song by ID", slog.Int("id", id))
 
 	query := "DELETE FROM songs WHERE id = $1"
-	result, err := r.db.Exec(query, id)
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		slog.Error("Error executing delete query", slog.Any("error", err))
 		return errors.Wrap(err, "execute query")
@@ -114,7 +116,7 @@ func (r *SongRepository) DeleteSongByID(id int) error {
 	return nil
 }
 
-func (r *SongRepository) UpdateSongByID(id int, updateRequest *models.UpdateSongRequest) error {
+func (r *SongRepository) UpdateSongByID(ctx context.Context, id int, updateRequest *models.UpdateSongRequest) error {
 	slog.Debug("Updating song by ID", slog.Int("id", id), slog.Any("updateRequest", updateRequest))
 
 	query := "UPDATE songs SET "
@@ -155,7 +157,7 @@ func (r *SongRepository) UpdateSongByID(id int, updateRequest *models.UpdateSong
 	query += strings.Join(setClauses, ", ") + fmt.Sprintf(" WHERE id = $%d", paramCount)
 	params = append(params, id)
 
-	result, err := r.db.Exec(query, params...)
+	result, err := r.db.ExecContext(ctx, query, params...)
 	if err != nil {
 		slog.Error("Error executing update query", slog.Any("error", err))
 		return errors.Wrap(err, "execute query")
@@ -175,7 +177,7 @@ func (r *SongRepository) UpdateSongByID(id int, updateRequest *models.UpdateSong
 	return nil
 }
 
-func (r *SongRepository) AddSong(group, song string, songDetail *models.SongDetail) (int, error) {
+func (r *SongRepository) AddSong(ctx context.Context, group, song string, songDetail *models.SongDetail) (int, error) {
 	slog.Debug("Adding new song", slog.String("group", group), slog.String("title", song))
 
 	formattedDate, err := convertDate(songDetail.ReleaseDate)
@@ -187,7 +189,7 @@ func (r *SongRepository) AddSong(group, song string, songDetail *models.SongDeta
 	query := "INSERT INTO songs (group_name, title, lyrics, release_date, link) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 
 	var id int
-	err = r.db.QueryRow(query, group, song, songDetail.Text, formattedDate, songDetail.Link).Scan(&id)
+	err = r.db.QueryRowContext(ctx, query, group, song, songDetail.Text, formattedDate, songDetail.Link).Scan(&id)
 	if err != nil {
 		slog.Error("Error inserting new song", slog.Any("error", err))
 		return 0, err

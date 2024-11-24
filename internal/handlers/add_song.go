@@ -31,7 +31,7 @@ func (h *SongHandler) AddSong(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Debug("Request payload decoded", slog.Any("newSong", newSong))
 
-	id, err := h.songService.AddSong(newSong)
+	id, err := h.songService.AddSong(r.Context(), newSong)
 	if err != nil {
 		slog.Error("Failed to add song", slog.Any("error", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)

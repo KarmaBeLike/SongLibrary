@@ -60,7 +60,7 @@ func (h *SongHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Fetching paginated song lyrics", slog.Int("id", id), slog.Int("page", page), slog.Int("limit", limit))
 
-	response, err := h.songService.GetPaginatedSongLyrics(id, page, limit)
+	response, err := h.songService.GetPaginatedSongLyrics(r.Context(), id, page, limit)
 	if err != nil {
 		slog.Error("Failed to fetch song lyrics", slog.Int("id", id), slog.Any("error", err))
 		http.Error(w, err.Error(), http.StatusNotFound)

@@ -42,7 +42,7 @@ func (h *SongHandler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Debug("Request body decoded", slog.Any("updateRequest", updateRequest))
 
-	if err := h.songService.UpdateSongByID(id, &updateRequest); err != nil {
+	if err := h.songService.UpdateSongByID(r.Context(), id, &updateRequest); err != nil {
 		slog.Error("Failed to update song", slog.Int("id", id), slog.Any("error", err))
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
