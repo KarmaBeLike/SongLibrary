@@ -4,7 +4,7 @@ type (
 	Song struct {
 		ID          int     `json:"song_id"`
 		Group       string  `json:"group"`
-		Title       string  `json:"song"`
+		Song        string  `json:"song"`
 		Lyrics      *string `json:"text"`
 		ReleaseDate *string `json:"releaseDate"`
 		Link        *string `json:"link"`
@@ -22,7 +22,7 @@ type (
 
 	SongFilter struct {
 		Group       string `json:"group"`
-		Title       string `json:"title"`
+		Song        string `json:"song"`
 		Text        string `json:"text"`
 		ReleaseDate string `json:"releaseDate"`
 		Page        int    `json:"page"`
@@ -32,13 +32,13 @@ type (
 	SongVerses struct {
 		ID     int      `json:"id"`
 		Group  string   `json:"group"`
-		Title  string   `json:"song"`
+		Song   string   `json:"song"`
 		Verses []string `json:"verses"`
 	}
 
 	UpdateSongRequest struct {
 		Group       *string `json:"group,omitempty"`
-		Title       *string `json:"title,omitempty"`
+		Song        *string `json:"song,omitempty"`
 		Lyrics      *string `json:"lyrics,omitempty"`
 		ReleaseDate *string `json:"releaseDate,omitempty"`
 		Link        *string `json:"link,omitempty"`

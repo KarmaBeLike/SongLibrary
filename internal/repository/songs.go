@@ -28,14 +28,14 @@ func (r *SongRepository) GetSongByID(ctx context.Context, id int) (models.Song, 
 		SELECT 
 			id, 
 			group_name, 
-			title, 
+			song, 
 			lyrics, 
 			release_date, 
 			link 
 		FROM songs 
 		WHERE id = $1
 	`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&song.ID, &song.Group, &song.Title, &song.Lyrics, &song.ReleaseDate, &song.Link)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&song.ID, &song.Group, &song.Song, &song.Lyrics, &song.ReleaseDate, &song.Link)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Info("No song found with ID", slog.Int("id", id))
@@ -49,7 +49,7 @@ func (r *SongRepository) GetSongByID(ctx context.Context, id int) (models.Song, 
 }
 
 func (r *SongRepository) GetSongsByFilter(ctx context.Context, filter models.SongFilter) ([]models.Song, error) {
-	query := `SELECT  song_id,group_name, title, lyrics, release_date, link FROM songs WHERE 1=1`
+	query := `SELECT  song_id,group_name, song, lyrics, release_date, link FROM songs WHERE 1=1`
 	args := []interface{}{}
 	paramIndex := 1
 
@@ -59,9 +59,9 @@ func (r *SongRepository) GetSongsByFilter(ctx context.Context, filter models.Son
 		paramIndex++
 	}
 
-	if filter.Title != "" {
-		query += fmt.Sprintf(" AND title ILIKE $%d", paramIndex)
-		args = append(args, "%"+filter.Title+"%")
+	if filter.Song != "" {
+		query += fmt.Sprintf(" AND song ILIKE $%d", paramIndex)
+		args = append(args, "%"+filter.Song+"%")
 		paramIndex++
 	}
 	if filter.Text != "" {
@@ -86,7 +86,7 @@ func (r *SongRepository) GetSongsByFilter(ctx context.Context, filter models.Son
 	var songs []models.Song
 	for rows.Next() {
 		var song models.Song
-		if err := rows.Scan(&song.ID, &song.Group, &song.Title, &song.Lyrics, &song.ReleaseDate, &song.Link); err != nil {
+		if err := rows.Scan(&song.ID, &song.Group, &song.Song, &song.Lyrics, &song.ReleaseDate, &song.Link); err != nil {
 			return nil, err
 		}
 		songs = append(songs, song)
@@ -128,9 +128,9 @@ func (r *SongRepository) UpdateSongByID(ctx context.Context, id int, updateReque
 		params = append(params, *updateRequest.Group)
 		paramCount++
 	}
-	if updateRequest.Title != nil {
-		setClauses = append(setClauses, fmt.Sprintf("title = $%d", paramCount))
-		params = append(params, *updateRequest.Title)
+	if updateRequest.Song != nil {
+		setClauses = append(setClauses, fmt.Sprintf("song = $%d", paramCount))
+		params = append(params, *updateRequest.Song)
 		paramCount++
 	}
 	if updateRequest.Lyrics != nil {
@@ -178,7 +178,7 @@ func (r *SongRepository) UpdateSongByID(ctx context.Context, id int, updateReque
 }
 
 func (r *SongRepository) AddSong(ctx context.Context, group, song string, songDetail *models.SongDetail) (int, error) {
-	slog.Debug("Adding new song", slog.String("group", group), slog.String("title", song))
+	slog.Debug("Adding new song", slog.String("group", group), slog.String("song", song))
 
 	formattedDate, err := convertDate(songDetail.ReleaseDate)
 	if err != nil {
@@ -186,7 +186,7 @@ func (r *SongRepository) AddSong(ctx context.Context, group, song string, songDe
 		return 0, err
 	}
 
-	query := "INSERT INTO songs (group_name, title, lyrics, release_date, link) VALUES ($1, $2, $3, $4, $5) RETURNING id"
+	query := "INSERT INTO songs (group_name, song, lyrics, release_date, link) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 
 	var id int
 	err = r.db.QueryRowContext(ctx, query, group, song, songDetail.Text, formattedDate, songDetail.Link).Scan(&id)

@@ -23,7 +23,7 @@ INSERT INTO groups (name) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Тестовые данные для песен
-INSERT INTO songs (group_id, group_name, title, lyrics, release_date, link) VALUES
+INSERT INTO songs (group_id, group_name, song, lyrics, release_date, link) VALUES
 (1, 'Muse', 'Supermassive Black Hole', '', '2006-05-09', NULL),
 (1, 'Muse', 'Hysteria', '', '2003-12-01', NULL),
 (2, 'Radiohead', 'Creep', '', '1992-09-21', NULL),
@@ -44,5 +44,5 @@ INSERT INTO songs (group_id, group_name, title, lyrics, release_date, link) VALU
 (9, 'The Rolling Stones', 'Angie', '', '1973-08-20', NULL),
 (10, 'Led Zeppelin', 'Stairway to Heaven', '', '1971-11-08', NULL),
 (10, 'Led Zeppelin', 'Kashmir', '', '1975-02-24', NULL)
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT (song) DO NOTHING;
 

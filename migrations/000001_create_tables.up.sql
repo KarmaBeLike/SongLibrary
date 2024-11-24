@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS groups (
 CREATE TABLE IF NOT EXISTS songs (
     song_id bigserial PRIMARY KEY,
     group_name VARCHAR(255) NOT NULL,
-    title VARCHAR(255) NOT NULL UNIQUE,
+    song VARCHAR(255) NOT NULL UNIQUE,
     lyrics TEXT NOT NULL,
     release_date DATE,
     link VARCHAR(255),
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS songs (
 
 CREATE INDEX IF NOT EXISTS idx_groups_name ON groups(name);
 CREATE INDEX IF NOT EXISTS idx_songs_group_id ON songs(group_id);
-CREATE INDEX IF NOT EXISTS idx_songs_title ON songs(title);
+CREATE INDEX IF NOT EXISTS idx_songs_song ON songs(song);
 CREATE INDEX IF NOT EXISTS idx_songs_release_date ON songs(release_date);
 
 

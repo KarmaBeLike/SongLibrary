@@ -99,7 +99,7 @@ func (s *SongService) GetPaginatedSongLyrics(ctx context.Context, id int, page, 
 	response := &models.SongVerses{
 		ID:     song.ID,
 		Group:  song.Group,
-		Title:  song.Title,
+		Song:   song.Song,
 		Verses: paginatedVerses,
 	}
 
