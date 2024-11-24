@@ -24,18 +24,20 @@ func NewSongService(songRepo *repository.SongRepository, externalAPIURL string) 
 	}
 }
 
-func (s *SongService) GetSongs(group, song string, page, limit int) ([]models.Song, models.Pagination, error) {
-	slog.Debug("Fetching songs", slog.String("group", group), slog.String("song", song), slog.Int("page", page), slog.Int("limit", limit))
+func (s *SongService) GetSongs(filter models.SongFilter) ([]models.Song, models.Pagination, error) {
+	slog.Debug("Fetching songs", slog.Any("filter", filter))
 
-	songs, err := s.songRepo.GetSongsByAnyField(group, song)
+	// Получение песен через репозиторий с фильтром
+	songs, err := s.songRepo.GetSongsByFilter(filter)
 	if err != nil {
-		slog.Error("Error fetching songs", slog.Any("error", err))
+		slog.Error("Error fetching songs", slog.Any("filter", filter), slog.Any("error", err))
 		return nil, models.Pagination{}, err
 	}
 
+	// Пагинация
 	total := len(songs)
-	start := (page - 1) * limit
-	end := start + limit
+	start := (filter.Page - 1) * filter.Limit
+	end := start + filter.Limit
 
 	if start > total {
 		start = total
@@ -47,10 +49,11 @@ func (s *SongService) GetSongs(group, song string, page, limit int) ([]models.So
 	paginatedSongs := songs[start:end]
 
 	pagination := models.Pagination{
-		Limit: limit,
-		Page:  page,
+		Limit: filter.Limit,
+		Page:  filter.Page,
 		Total: total,
 	}
+
 	slog.Info("Songs fetched successfully", slog.Int("total", total), slog.Int("returned_count", len(paginatedSongs)))
 
 	return paginatedSongs, pagination, nil

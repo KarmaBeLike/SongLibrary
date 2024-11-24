@@ -46,6 +46,10 @@ func main() {
 		slog.Error("error running migrations", slog.Any("error", err))
 		return
 	}
+	err = database.LoadTestData(db, "migrations/seed_data.sql")
+	if err != nil {
+		log.Fatal("Error loading test data:", err)
+	}
 
 	songRepo := repository.NewSongRepository(db)
 	songService := service.NewSongService(songRepo, cfg.ExternalAPIURL)

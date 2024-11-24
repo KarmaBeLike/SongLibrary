@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/KarmaBeLike/SongLibrary/config"
 
@@ -51,32 +52,18 @@ func RunMigrations(db *sql.DB) error {
 
 	log.Println("Migrations applied successfully!")
 
-	if err := printExistingTables(db); err != nil {
-		return errors.Wrap(err, "failed to print existing tables")
-	}
-
 	return nil
 }
 
-func printExistingTables(db *sql.DB) error {
-	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+func LoadTestData(db *sql.DB, filePath string) error {
+	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return errors.Wrap(err, "querying existing tables")
+		return fmt.Errorf("failed to read test data file: %w", err)
 	}
-	defer rows.Close()
-
-	log.Println("Existing tables:")
-	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return errors.Wrap(err, "scanning table name")
-		}
-		log.Println("-", tableName)
+	_, err = db.Exec(string(content))
+	if err != nil {
+		return fmt.Errorf("failed to execute test data: %w", err)
 	}
-
-	if err := rows.Err(); err != nil {
-		return errors.Wrap(err, "error during rows iteration")
-	}
-
+	log.Println("Test data loaded successfully!")
 	return nil
 }

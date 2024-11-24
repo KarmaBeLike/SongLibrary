@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"time"
 
@@ -48,59 +47,48 @@ func (r *SongRepository) GetSongByID(id int) (models.Song, error) {
 	return song, nil
 }
 
-func (r *SongRepository) GetSongsByAnyField(group, title string) ([]models.Song, error) {
-	slog.Debug("Fetching songs by fields", slog.String("group", group), slog.String("title", title))
-
-	query := `SELECT id, group_name, title, release_date, lyrics, link FROM songs WHERE 1=1`
+func (r *SongRepository) GetSongsByFilter(filter models.SongFilter) ([]models.Song, error) {
+	query := `SELECT  song_id,group_name, title, lyrics, release_date, link FROM songs WHERE 1=1`
 	args := []interface{}{}
+	paramIndex := 1
 
-	if group != "" {
-		query += " AND group_name = $" + strconv.Itoa(len(args)+1)
-		args = append(args, group)
+	if filter.Group != "" {
+		query += fmt.Sprintf(" AND group_name = $%d", paramIndex)
+		args = append(args, filter.Group)
+		paramIndex++
 	}
-	if title != "" {
-		query += " AND title = $" + strconv.Itoa(len(args)+1)
-		args = append(args, title)
+	if filter.Title != "" {
+		query += fmt.Sprintf(" AND title ILIKE $%d", paramIndex)
+		args = append(args, "%"+filter.Title+"%")
+		paramIndex++
 	}
+	if filter.Text != "" {
+		query += fmt.Sprintf(" AND lyrics ILIKE $%d", paramIndex)
+		args = append(args, "%"+filter.Text+"%")
+		paramIndex++
+	}
+	if filter.ReleaseDate != "" {
+		query += fmt.Sprintf(" AND release_date = $%d", paramIndex)
+		args = append(args, filter.ReleaseDate)
+		paramIndex++
+	}
+
+	slog.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		slog.Error("Error executing query", slog.Any("error", err))
-		return nil, errors.Wrap(err, "query execution error")
+		return nil, err
 	}
 	defer rows.Close()
 
 	var songs []models.Song
 	for rows.Next() {
 		var song models.Song
-		var releaseDate, lyrics, link sql.NullString
-
-		if err := rows.Scan(&song.ID, &song.Group, &song.Title, &releaseDate, &lyrics, &link); err != nil {
-			slog.Error("Error scanning row", slog.Any("error", err))
-			return nil, errors.Wrap(err, "row scanning error")
+		if err := rows.Scan(&song.ID, &song.Group, &song.Title, &song.Lyrics, &song.ReleaseDate, &song.Link); err != nil {
+			return nil, err
 		}
-
-		if releaseDate.Valid {
-			song.ReleaseDate = &releaseDate.String
-		} else {
-			song.ReleaseDate = nil
-		}
-
-		if lyrics.Valid {
-			song.Lyrics = &lyrics.String
-		} else {
-			song.Lyrics = nil
-		}
-
-		if link.Valid {
-			song.Link = &link.String
-		} else {
-			song.Link = nil
-		}
-
 		songs = append(songs, song)
 	}
-	slog.Info("Songs fetched successfully", slog.Int("count", len(songs)))
 	return songs, nil
 }
 
