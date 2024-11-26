@@ -24,7 +24,6 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Тестовые данные для песен
 INSERT INTO songs (group_id, group_name, song, lyrics, release_date, link) VALUES
-(1, 'Muse', 'Supermassive Black Hole', '', '2006-05-09', NULL),
 (1, 'Muse', 'Hysteria', '', '2003-12-01', NULL),
 (2, 'Radiohead', 'Creep', '', '1992-09-21', NULL),
 (2, 'Radiohead', 'Karma Police', '', '1997-08-25', NULL),

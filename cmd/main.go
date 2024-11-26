@@ -9,6 +9,7 @@ import (
 
 	"github.com/KarmaBeLike/SongLibrary/config"
 	_ "github.com/KarmaBeLike/SongLibrary/docs"
+	"github.com/KarmaBeLike/SongLibrary/internal/api"
 	"github.com/KarmaBeLike/SongLibrary/internal/database"
 	"github.com/KarmaBeLike/SongLibrary/internal/repository"
 	"github.com/KarmaBeLike/SongLibrary/internal/routers"
@@ -52,7 +53,9 @@ func main() {
 	}
 
 	songRepo := repository.NewSongRepository(db)
-	songService := service.NewSongService(songRepo, cfg.ExternalAPIURL)
+	apiClient := api.NewExternalAPI(cfg.ExternalAPI)
+	fmt.Println(cfg.ExternalAPI)
+	songService := service.NewSongService(songRepo, apiClient)
 	router := routers.SetupRoutes(songService)
 
 	port := cfg.Port

@@ -7,13 +7,13 @@ import (
 )
 
 type Config struct {
-	Port           int    `mapstructure:"PORT"`
-	DBHost         string `mapstructure:"DB_HOST"`
-	DBPort         int    `mapstructure:"DB_PORT"`
-	DBName         string `mapstructure:"DB_NAME"`
-	DBUser         string `mapstructure:"DB_USER"`
-	DBPassword     string `mapstructure:"DB_PASSWORD"`
-	ExternalAPIURL string `mapstructure:"API_URL"`
+	Port        int    `mapstructure:"PORT"`
+	DBHost      string `mapstructure:"DB_HOST"`
+	DBPort      int    `mapstructure:"DB_PORT"`
+	DBName      string `mapstructure:"DB_NAME"`
+	DBUser      string `mapstructure:"DB_USER"`
+	DBPassword  string `mapstructure:"DB_PASSWORD"`
+	ExternalAPI string `mapstructure:"API_URL"`
 }
 
 func Load() (*Config, error) {
@@ -30,7 +30,7 @@ func Load() (*Config, error) {
 		log.Fatal("Can't find the file .env : ", err)
 	}
 
-	err = viper.Unmarshal(config)
+	err = viper.Unmarshal(&config)
 	if err != nil {
 		log.Fatal("Environment can't be loaded: ", err)
 	}

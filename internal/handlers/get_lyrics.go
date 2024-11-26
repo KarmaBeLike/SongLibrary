@@ -21,10 +21,15 @@ import (
 // @Failure 404 {string} string "Song not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/songs/lyrics [get]
-func (h *SongHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
+func (h *SongHandler) GetSongLyrics(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Received request to get song by ID", slog.String("method", r.Method), slog.String("url", r.URL.String()))
 
-	idStr := r.URL.Query().Get("id")
+	idStr := r.URL.Query().Get("song_id")
+	if idStr == "" {
+		slog.Error("Invalid song ID", slog.Any("idStr", idStr))
+		http.Error(w, "Missing or invalid song_id", http.StatusBadRequest)
+		return
+	}
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		slog.Error("Invalid song ID", slog.String("idStr", idStr), slog.Any("error", err))

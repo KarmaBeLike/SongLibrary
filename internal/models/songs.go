@@ -5,7 +5,7 @@ type (
 		ID          int     `json:"song_id"`
 		Group       string  `json:"group"`
 		Song        string  `json:"song"`
-		Lyrics      *string `json:"text"`
+		Text        *string `json:"text"`
 		ReleaseDate *string `json:"releaseDate"`
 		Link        *string `json:"link"`
 	}
@@ -25,6 +25,7 @@ type (
 		Song        string `json:"song"`
 		Text        string `json:"text"`
 		ReleaseDate string `json:"releaseDate"`
+		Link        string `json:"link"`
 		Page        int    `json:"page"`
 		Limit       int    `json:"limit"`
 	}
@@ -34,12 +35,13 @@ type (
 		Group  string   `json:"group"`
 		Song   string   `json:"song"`
 		Verses []string `json:"verses"`
+		Total  int      `json:"total"`
 	}
 
 	UpdateSongRequest struct {
 		Group       *string `json:"group,omitempty"`
 		Song        *string `json:"song,omitempty"`
-		Lyrics      *string `json:"lyrics,omitempty"`
+		Text        *string `json:"lyrics,omitempty"`
 		ReleaseDate *string `json:"releaseDate,omitempty"`
 		Link        *string `json:"link,omitempty"`
 	}

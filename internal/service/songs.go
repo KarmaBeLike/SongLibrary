@@ -2,26 +2,24 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"net/url"
 	"strings"
 
+	"github.com/KarmaBeLike/SongLibrary/internal/api"
 	"github.com/KarmaBeLike/SongLibrary/internal/models"
 	"github.com/KarmaBeLike/SongLibrary/internal/repository"
 )
 
 type SongService struct {
-	songRepo       *repository.SongRepository
-	externalAPIURL string
+	songRepo    *repository.SongRepository
+	externalAPI *api.ExternalAPI
 }
 
-func NewSongService(songRepo *repository.SongRepository, externalAPIURL string) *SongService {
+func NewSongService(songRepo *repository.SongRepository, externalAPI *api.ExternalAPI) *SongService {
 	return &SongService{
-		songRepo:       songRepo,
-		externalAPIURL: externalAPIURL,
+		songRepo:    songRepo,
+		externalAPI: externalAPI,
 	}
 }
 
@@ -69,12 +67,12 @@ func (s *SongService) GetPaginatedSongLyrics(ctx context.Context, id int, page, 
 		return nil, err
 	}
 
-	if song.Lyrics == nil {
-		slog.Warn("Lyrics not found for song", slog.Int("song_id", id))
+	if song.Text == nil {
+		slog.Warn("Text not found for song", slog.Int("song_id", id))
 		return nil, fmt.Errorf("lyrics not found for song ID %d", id)
 	}
 
-	verses := strings.Split(*song.Lyrics, "\n\n")
+	verses := strings.Split(*song.Text, "\n\n")
 
 	for i := range verses {
 		verses[i] = strings.TrimSpace(verses[i])
@@ -101,9 +99,10 @@ func (s *SongService) GetPaginatedSongLyrics(ctx context.Context, id int, page, 
 		Group:  song.Group,
 		Song:   song.Song,
 		Verses: paginatedVerses,
+		Total:  len(verses),
 	}
 
-	slog.Info("Lyrics fetched successfully", slog.Int("song_id", id), slog.Int("returned_verses", len(paginatedVerses)))
+	slog.Info("Text fetched successfully", slog.Int("song_id", id), slog.Int("returned_verses", len(paginatedVerses)))
 
 	return response, nil
 }
@@ -135,38 +134,20 @@ func (s *SongService) UpdateSongByID(ctx context.Context, id int, updateRequest 
 func (s *SongService) AddSong(ctx context.Context, newSong models.NewSongRequest) (int, error) {
 	slog.Info("Adding new song", slog.String("group", newSong.Group), slog.String("song", newSong.Song))
 
-	requestURL := fmt.Sprintf("%s?group=%s&song=%s", s.externalAPIURL, url.QueryEscape(newSong.Group), url.QueryEscape(newSong.Song))
-
-	slog.Debug("Calling external API", slog.String("url", requestURL))
-
-	resp, err := http.Get(requestURL)
+	// Получить детали песни из внешнего API
+	songDetail, err := s.externalAPI.FetchSongDetail(ctx, newSong.Group, newSong.Song)
 	if err != nil {
-		slog.Error("Failed to call external API", slog.Any("error", err))
-		return 0, fmt.Errorf("failed to call external API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	slog.Debug("External API response", slog.String("status", resp.Status))
-
-	if resp.StatusCode != http.StatusOK {
-		slog.Warn("External API returned non-OK status", slog.String("status", resp.Status))
-		return 0, fmt.Errorf("external API returned status: %s", resp.Status)
+		slog.Error("Failed to fetch song detail", slog.Any("error", err))
+		return 0, fmt.Errorf("failed to fetch song detail: %w", err)
 	}
 
-	var songDetail models.SongDetail
-	if err := json.NewDecoder(resp.Body).Decode(&songDetail); err != nil {
-		slog.Error("Failed to decode external API response", slog.Any("error", err))
-		return 0, fmt.Errorf("failed to decode external API response: %w", err)
-	}
-
-	slog.Info("Successfully retrieved song details from external API", slog.Any("songDetail", songDetail))
-
-	id, err := s.songRepo.AddSong(ctx, newSong.Group, newSong.Song, &songDetail)
+	// Добавить песню в базу данных
+	songID, err := s.songRepo.AddSong(ctx, newSong.Group, newSong.Song, songDetail)
 	if err != nil {
 		slog.Error("Failed to add song to the database", slog.Any("error", err))
 		return 0, err
 	}
-	slog.Info("Successfully added song to the database", slog.Int("song_id", id))
 
-	return id, nil
+	slog.Info("Successfully added song to the database", slog.Int("songID", songID))
+	return songID, nil
 }

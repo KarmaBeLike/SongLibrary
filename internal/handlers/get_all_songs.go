@@ -35,9 +35,10 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	// Создаём экземпляр структуры фильтров
 	filter := &models.SongFilter{
 		Group:       r.URL.Query().Get("group"),
-		Song:       r.URL.Query().Get("song"),
+		Song:        r.URL.Query().Get("song"),
 		Text:        r.URL.Query().Get("text"),
 		ReleaseDate: r.URL.Query().Get("releaseDate"),
+		Link:        r.URL.Query().Get("link"),
 	}
 
 	// Обрабатываем параметры `page` и `limit`
