@@ -41,7 +41,6 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 		Link:        r.URL.Query().Get("link"),
 	}
 
-	// Обрабатываем параметры `page` и `limit`
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 1 {
 		page = 1
@@ -57,7 +56,6 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	filter.Limit = limit
 
 	slog.Debug("Received filter request", slog.Any("filter", filter))
-	// Вызов сервиса с фильтром
 
 	songs, pagination, err := h.songService.GetSongs(r.Context(), *filter)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/KarmaBeLike/SongLibrary/internal/api"
 	"github.com/KarmaBeLike/SongLibrary/internal/models"
 	"github.com/KarmaBeLike/SongLibrary/internal/repository"
+	"github.com/KarmaBeLike/SongLibrary/pkg/validation"
 )
 
 type SongService struct {
@@ -134,14 +135,20 @@ func (s *SongService) UpdateSongByID(ctx context.Context, id int, updateRequest 
 func (s *SongService) AddSong(ctx context.Context, newSong models.NewSongRequest) (int, error) {
 	slog.Info("Adding new song", slog.String("group", newSong.Group), slog.String("song", newSong.Song))
 
-	// Получить детали песни из внешнего API
+	// 2. Получить детали песни из внешнего API
 	songDetail, err := s.externalAPI.FetchSongDetail(ctx, newSong.Group, newSong.Song)
 	if err != nil {
 		slog.Error("Failed to fetch song detail", slog.Any("error", err))
 		return 0, fmt.Errorf("failed to fetch song detail: %w", err)
 	}
 
-	// Добавить песню в базу данных
+	// 3. Проверить текст песни, если нужно
+	if err := validation.ValidateSongText(songDetail.Text); err != nil {
+		slog.Error("Song text validation failed", slog.Any("error", err))
+		return 0, fmt.Errorf("song text validation error: %w", err)
+	}
+
+	// 4. Добавить песню в базу данных
 	songID, err := s.songRepo.AddSong(ctx, newSong.Group, newSong.Song, songDetail)
 	if err != nil {
 		slog.Error("Failed to add song to the database", slog.Any("error", err))
