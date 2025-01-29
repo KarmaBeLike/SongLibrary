@@ -6,21 +6,34 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/KarmaBeLike/SongLibrary/internal/api"
 	"github.com/KarmaBeLike/SongLibrary/internal/models"
-	"github.com/KarmaBeLike/SongLibrary/internal/repository"
 	"github.com/KarmaBeLike/SongLibrary/pkg/validation"
 )
 
-type SongService struct {
-	songRepo    *repository.SongRepository
-	externalAPI *api.ExternalAPI
-}
+type (
+	SongDetailFetcher interface {
+		FetchSongDetail(ctx context.Context, group, song string) (*models.SongDetail, error)
+	}
 
-func NewSongService(songRepo *repository.SongRepository, externalAPI *api.ExternalAPI) *SongService {
+	SongStorage interface {
+		GetSongByID(ctx context.Context, id int) (models.Song, error)
+		GetSongsByFilter(ctx context.Context, filter models.SongFilter) ([]models.Song, error)
+		DeleteSongByID(ctx context.Context, id int) error
+		UpdateSongByID(ctx context.Context, id int, updateRequest *models.UpdateSongRequest) error
+		AddSong(ctx context.Context, group, song string, songDetail *models.SongDetail) (int, error)
+		GetOrCreateGroup(ctx context.Context, groupName string) (int, error)
+	}
+
+	SongService struct {
+		storage SongStorage
+		api     SongDetailFetcher
+	}
+)
+
+func NewSongService(storage SongStorage, api SongDetailFetcher) *SongService {
 	return &SongService{
-		songRepo:    songRepo,
-		externalAPI: externalAPI,
+		storage: storage,
+		api:     api,
 	}
 }
 
@@ -28,7 +41,7 @@ func (s *SongService) GetSongs(ctx context.Context, filter models.SongFilter) ([
 	slog.Debug("Fetching songs", slog.Any("filter", filter))
 
 	// Получение песен через репозиторий с фильтром
-	songs, err := s.songRepo.GetSongsByFilter(ctx, filter)
+	songs, err := s.storage.GetSongsByFilter(ctx, filter)
 	if err != nil {
 		slog.Error("Error fetching songs", slog.Any("filter", filter), slog.Any("error", err))
 		return nil, models.Pagination{}, err
@@ -55,14 +68,13 @@ func (s *SongService) GetSongs(ctx context.Context, filter models.SongFilter) ([
 	}
 
 	slog.Info("Songs fetched successfully", slog.Int("total", total), slog.Int("returned_count", len(paginatedSongs)))
-
 	return paginatedSongs, pagination, nil
 }
 
 func (s *SongService) GetPaginatedSongLyrics(ctx context.Context, id int, page, limit int) (*models.SongVerses, error) {
 	slog.Debug("Fetching song lyrics", slog.Int("song_id", id), slog.Int("page", page), slog.Int("limit", limit))
 
-	song, err := s.songRepo.GetSongByID(ctx, id)
+	song, err := s.storage.GetSongByID(ctx, id)
 	if err != nil {
 		slog.Error("Error fetching song by ID", slog.Int("song_id", id), slog.Any("error", err))
 		return nil, err
@@ -104,14 +116,13 @@ func (s *SongService) GetPaginatedSongLyrics(ctx context.Context, id int, page, 
 	}
 
 	slog.Info("Text fetched successfully", slog.Int("song_id", id), slog.Int("returned_verses", len(paginatedVerses)))
-
 	return response, nil
 }
 
 func (s *SongService) DeleteSongByID(ctx context.Context, id int) error {
 	slog.Debug("Deleting song by ID", slog.Int("song_id", id))
 
-	err := s.songRepo.DeleteSongByID(ctx, id)
+	err := s.storage.DeleteSongByID(ctx, id)
 	if err != nil {
 		slog.Error("Error deleting song", slog.Int("song_id", id), slog.Any("error", err))
 		return fmt.Errorf("failed to delete song: %w", err)
@@ -122,7 +133,7 @@ func (s *SongService) DeleteSongByID(ctx context.Context, id int) error {
 
 func (s *SongService) UpdateSongByID(ctx context.Context, id int, updateRequest *models.UpdateSongRequest) error {
 	slog.Debug("Updating song by ID", slog.Int("song_id", id), slog.Any("updateRequest", updateRequest))
-	err := s.songRepo.UpdateSongByID(ctx, id, updateRequest)
+	err := s.storage.UpdateSongByID(ctx, id, updateRequest)
 	if err != nil {
 		slog.Error("Error updating song", slog.Int("song_id", id), slog.Any("error", err))
 		return err
@@ -136,7 +147,7 @@ func (s *SongService) AddSong(ctx context.Context, newSong models.NewSongRequest
 	slog.Info("Adding new song", slog.String("group", newSong.Group), slog.String("song", newSong.Song))
 
 	// 2. Получить детали песни из внешнего API
-	songDetail, err := s.externalAPI.FetchSongDetail(ctx, newSong.Group, newSong.Song)
+	songDetail, err := s.api.FetchSongDetail(ctx, newSong.Group, newSong.Song)
 	if err != nil {
 		slog.Error("Failed to fetch song detail", slog.Any("error", err))
 		return 0, fmt.Errorf("failed to fetch song detail: %w", err)
@@ -149,7 +160,7 @@ func (s *SongService) AddSong(ctx context.Context, newSong models.NewSongRequest
 	}
 
 	// 4. Добавить песню в базу данных
-	songID, err := s.songRepo.AddSong(ctx, newSong.Group, newSong.Song, songDetail)
+	songID, err := s.storage.AddSong(ctx, newSong.Group, newSong.Song, songDetail)
 	if err != nil {
 		slog.Error("Failed to add song to the database", slog.Any("error", err))
 		return 0, err

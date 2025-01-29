@@ -8,7 +8,7 @@ import (
 )
 
 func SetupRoutes(songService *service.SongService) *mux.Router {
-	songHandler := handlers.NewSongHandler(songService)
+	songHandler := handlers.NewSongClient(songService)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/api/songs", songHandler.GetSongs).Methods("GET")

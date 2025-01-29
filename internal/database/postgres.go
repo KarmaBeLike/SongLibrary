@@ -51,7 +51,6 @@ func RunMigrations(db *sql.DB) error {
 	}
 
 	log.Println("Migrations applied successfully!")
-
 	return nil
 }
 
@@ -64,6 +63,7 @@ func LoadTestData(db *sql.DB, filePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to execute test data: %w", err)
 	}
+
 	log.Println("Test data loaded successfully!")
 	return nil
 }

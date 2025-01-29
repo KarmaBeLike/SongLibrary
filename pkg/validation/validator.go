@@ -38,6 +38,5 @@ func ValidateSongText(songText string) error {
 			return ErrContainsInvalidChars
 		}
 	}
-
 	return nil
 }

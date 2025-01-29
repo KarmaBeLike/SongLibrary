@@ -48,6 +48,7 @@ func (c *ExternalAPI) FetchSongDetail(ctx context.Context, group, song string) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch song detail: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
